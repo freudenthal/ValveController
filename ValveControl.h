@@ -1,5 +1,4 @@
-#ifndef VALVECONTROL_H
-#define VALVECONTROL_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -44,24 +43,24 @@ class ValveControl
     void SetAutomaticModeActive(bool AutomaticModeActiveToSet);
     bool GetAutomaticModeActive();
     void SetAutomaticModePercentageOpen(float AutomaticModePercentageToSet);
-    bool GetAutomaticModePercentageOpen();
-    void SetPinFunctions
-    (
-      SetPinOutputFunction EnableOutputFunctionToUse,
-      SetPinOutputFunction DirectionOutputFunctionToUse,
-      GetPinInputFunction GetOpenStatusFunctionToUse,
-      GetPinInputFunction GetCosedStatusFunctionToUse,
-    );
-    void SetGetTimeFunction(GetTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse);
+    float GetAutomaticModePercentageOpen();
+    void SetPinFunctions(SetPinOutputFunction EnableOutputFunctionToUse,SetPinOutputFunction DirectionOutputFunctionToUse,GetPinInputFunction GetOpenStatusFunctionToUse,GetPinInputFunction GetCosedStatusFunctionToUse);
+    void SetGetTimeFunction(GetEpochTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse);
     void SetActionCallbackFunction(ActionCallbackFunction ActionCallbackToUse);
   private:
     void Reset();
+    void CheckAutomationTime();
+    void CheckOnPosition();
+    void FireActionCallback(ValveAction ActionType);
+    void StopMoving();
+    void CheckPositionPins();
+    void CheckPositionToTargetPosition();
     static const float AllowablePositionError;
     SetPinOutputFunction SetEnableOutput;
     SetPinOutputFunction SetDirectionOutput;
     GetPinInputFunction GetOpenStatus;
     GetPinInputFunction GetClosedStatus;
-    GetTimeInSecondsFunction GetEpochTimeInSeconds;
+    GetEpochTimeInSecondsFunction GetEpochTimeInSeconds;
     ActionCallbackFunction ActionCallback;
     ValveMode Mode;
     bool BeginComplete;
@@ -82,5 +81,3 @@ class ValveControl
     float AutoModePercentageOpen;
     bool AutomaticModeInAction;
 };
-
-#endif

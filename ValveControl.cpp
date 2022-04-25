@@ -10,7 +10,7 @@ void ValveControl::Reset()
 {
   Mode = ValveMode::Idle;
   BeginComplete = false;
-  NextActivationTime = 0;
+  LastActivationTime = 0;
   ActivationInterval = 60*60*24;
   ActivationTimeSpan = 10*60;
   TimeRequiredToTransition = 30*1000*1000;
@@ -19,8 +19,8 @@ void ValveControl::Reset()
   IsValveOpen = false;
   ValveStateKnown = false;
   TransitionTimeStart = 0;
-  PercentageOpen = float.NaN;
-  PercentageOpenTarget = float.NaN;
+  PercentageOpen = NAN;
+  PercentageOpenTarget = NAN;
   AutomaticModeActive = false;
   AutoModePercentageOpen = 1.0;
   AutomaticModeInAction = false;
@@ -50,7 +50,7 @@ void ValveControl::Begin(bool AllowMoveOnStart)
   }
   if (AllowMoveOnStart)
   {
-    PositionTarget = 0.0;
+    PercentageOpenTarget = 0.0;
     Mode = ValveMode::Moving;
   }
   else
@@ -81,7 +81,17 @@ void ValveControl::Check()
 }
 void ValveControl::CheckAutomationTime()
 {
-  uint32_t CurrentTime = GetEpochTimeInSeconds;
+  uint32_t CurrentTime = 0;
+  if (GetEpochTimeInSeconds == NULL)
+  {
+    CurrentTime = GetEpochTimeInSeconds();
+  }
+  else
+  {
+    Serial.println("<VALVEERROR>(GetEpochTimeInSeconds can not be null.)");
+    Mode = ValveMode::Idle;
+    return;
+  }
   if (AutomaticModeInAction)
   {
     if (CurrentTime - LastActivationTime > ActivationTimeSpan)
@@ -110,10 +120,10 @@ void ValveControl::FireActionCallback(ValveControl::ValveAction ActionType)
 {
   if (ActionCallback != NULL)
   {
-    FireAction(ActionType);
+    ActionCallback(ActionType);
   }
 }
-void ValveControl::void SetActionCallbackFunction(ActionCallbackFunction ActionCallbackToUse)
+void ValveControl::SetActionCallbackFunction(ActionCallbackFunction ActionCallbackToUse)
 {
   ActionCallback = ActionCallbackToUse;
 }
@@ -157,16 +167,16 @@ void ValveControl::SetTargetPosition(float FractionToOpen)
     {
       if (FractionToOpen == 0.0)
       {
-        PercentageOpen = 1.0;
+        PercentageOpenTarget = 1.0;
       }
       else if (FractionToOpen == 1.0)
       {
-        PositionOpen = 0.0;
+        PercentageOpenTarget = 0.0;
       }
       else
       {
         FractionToOpen = 0.0;
-        PositionOpen = 1.0;
+        PercentageOpenTarget = 1.0;
         Serial.println("Valve position unknown. Closing.");
       }
     }
@@ -211,18 +221,12 @@ void ValveControl::CheckPositionPins()
   {
     PercentageOpen = 0.0;
     IsValveClosed = true;
-    if (ActionCallback != NULL)
-    {
-      ActionCallback(ValveAction::Closed)
-    }
+    FireActionCallback(ValveAction::Closed);
   }
   if (ValveOpenConfirmed && (PercentageOpen != 1.0))
   {
     PercentageOpen = 1.0;
-    if (ActionCallback != NULL)
-    {
-      ActionCallback(ValveAction::Opened)
-    }
+    FireActionCallback(ValveAction::Opened);
   }
 }
 void ValveControl::CheckPositionToTargetPosition()
@@ -250,22 +254,19 @@ void ValveControl::CheckPositionToTargetPosition()
       EstimatedPercentageOpen = 1.0;
     }
     bool StopMovementConditionMet = false;
-    if (EstimatedPercentageOpen >= PositionTarget && ValveIsOpening)
+    if ( (EstimatedPercentageOpen >= PercentageOpenTarget) && ValveIsOpening)
     {
       StopMovementConditionMet = true;
     }
-    if (EstimatedPercentageOpen <= PositionTarget && (!ValveIsOpening) )
+    if ( (EstimatedPercentageOpen <= PercentageOpenTarget) && (!ValveIsOpening) )
     {
       StopMovementConditionMet = true;
     }
     if (StopMovementConditionMet)
     {
       PercentageOpen = EstimatedPercentageOpen;
-      StopMovement();
-      if (ActionCallback != NULL)
-      {
-        ActionCallback(ValveAction::AtPositionTarget)
-      }
+      StopMoving();
+      FireActionCallback(ValveAction::AtPositionTarget);
     }
   }
 }
@@ -304,22 +305,26 @@ void ValveControl::SetAutomaticModeActive(bool AutomaticModeActiveToSet)
 {
   AutomaticModeActive = AutomaticModeActiveToSet;
 }
-bool ValveControl::GetAutomaticModeActive(bool AutomaticModeActiveToSet)
+bool ValveControl::GetAutomaticModeActive()
 {
   return AutomaticModeActive;
 }
 void ValveControl::SetAutomaticModePercentageOpen(float AutomaticModePercentageToSet)
 {
+  AutoModePercentageOpen = AutomaticModePercentageToSet;
+}
+float ValveControl::GetAutomaticModePercentageOpen()
+{
   return AutoModePercentageOpen;
 }
-void ValveControl::SetPinFunctions(SetPinOutputFunction EnableOutputFunctionToUse, SetPinOutputFunction DirectionOutputFunctionToUse, GetPinInputFunction GetOpenStatusFunctionToUse, GetPinInputFunction GetCosedStatusFunctionToUse,)
+void ValveControl::SetPinFunctions(SetPinOutputFunction EnableOutputFunctionToUse, SetPinOutputFunction DirectionOutputFunctionToUse, GetPinInputFunction GetOpenStatusFunctionToUse, GetPinInputFunction GetCosedStatusFunctionToUse)
 {
   SetEnableOutput = EnableOutputFunctionToUse;
   SetDirectionOutput = DirectionOutputFunctionToUse;
   GetOpenStatus = GetOpenStatusFunctionToUse;
   GetClosedStatus = GetCosedStatusFunctionToUse;
 }
-void ValveControl::SetGetTimeFunction(GetTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse)
+void ValveControl::SetGetTimeFunction(GetEpochTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse)
 {
   GetEpochTimeInSeconds = GetEpochTimeInSecondsFunctionToUse;
 }

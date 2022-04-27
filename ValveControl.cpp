@@ -52,7 +52,7 @@ void ValveControl::Begin(bool AllowMoveOnStart)
   if (AllowMoveOnStart)
   {
     PercentageOpenTarget = 0.0;
-    Mode = ValveMode::Moving;
+    SetValveModeMoving();
   }
   else
   {
@@ -160,6 +160,11 @@ void ValveControl::void SetVerbose(bool VerboseToSet)
 {
   Verbose = VerboseToSet;
 }
+void ValveControl::SetValveModeMoving()
+{
+  Mode = ValveMode::Moving;
+  TransitionTimeStart = micros();
+}
 void ValveControl::SetTargetPosition(float FractionToOpen)
 {
   if (FractionToOpen < 0.0)
@@ -199,8 +204,7 @@ void ValveControl::SetTargetPosition(float FractionToOpen)
     if (TransitionTimeToTarget > 0)
     {
       PercentageOpenTarget = FractionToOpen;
-      Mode = ValveMode::Moving;
-      TransitionTimeStart = micros();
+      SetValveModeMoving();
       float ChangeToPositionTarget = PercentageOpen - PercentageOpenTarget;
       bool NeedToOpenMore = ChangeToPositionTarget > 0.0;
       if (NeedToOpenMore)

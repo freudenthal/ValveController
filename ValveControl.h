@@ -44,6 +44,7 @@ class ValveControl
     bool GetAutomaticModeActive();
     void SetAutomaticModePercentageOpen(float AutomaticModePercentageToSet);
     float GetAutomaticModePercentageOpen();
+    uint32_t GetLastTransitionTime();
     void SetPinFunctions(SetPinOutputFunction EnableOutputFunctionToUse,SetPinOutputFunction DirectionOutputFunctionToUse,GetPinInputFunction GetOpenStatusFunctionToUse,GetPinInputFunction GetCosedStatusFunctionToUse);
     void SetGetTimeFunction(GetEpochTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse);
     void SetActionCallbackFunction(ActionCallbackFunction ActionCallbackToUse);
@@ -64,12 +65,14 @@ class ValveControl
     ActionCallbackFunction ActionCallback;
     ValveMode Mode;
     bool BeginComplete;
+    bool ChangeIsFullSpan;
     uint32_t LastActivationTime;
     uint32_t ActivationInterval;
     uint32_t ActivationTimeSpan;
     uint32_t TimeRequiredToTransition;
     uint32_t TransitionTimeStart;
     uint32_t TransitionTimeToTarget;
+    uint32_t LastTransitionTime;
     bool IsValveClosed;
     bool IsValveOpen;
     bool ValveStateKnown;

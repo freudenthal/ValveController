@@ -13,7 +13,7 @@ void ValveControl::Reset()
   LastActivationTime = 0;
   ActivationInterval = 60*60*24;
   ActivationTimeSpan = 10*60;
-  TimeRequiredToTransition = 30*1000*1000;
+  TimeRequiredToTransition = (uint32_t)(5.72*1000000);
   PercentageOpenTarget = 0.0;
   IsValveClosed = false;
   IsValveOpen = false;
@@ -156,7 +156,7 @@ uint32_t ValveControl::GetLastTransitionTime()
 {
   return LastTransitionTime;
 }
-void ValveControl::void SetVerbose(bool VerboseToSet)
+void ValveControl::SetVerbose(bool VerboseToSet)
 {
   Verbose = VerboseToSet;
 }
@@ -167,6 +167,12 @@ void ValveControl::SetValveModeMoving()
 }
 void ValveControl::SetTargetPosition(float FractionToOpen)
 {
+  if (Verbose)
+  {
+    Serial.print("Valve target setting to ");
+    Serial.print(FractionToOpen,2);
+    Serial.println(".");
+  }
   if (FractionToOpen < 0.0)
   {
     FractionToOpen = 0.0;
@@ -198,24 +204,53 @@ void ValveControl::SetTargetPosition(float FractionToOpen)
       }
     }
     float ChangeInTarget = PercentageOpenTarget - FractionToOpen;
-    ChangeIsFullSpan = ChangeInTarget > 0.99;
     float AbsoluteChange = abs(ChangeInTarget);
+    ChangeIsFullSpan = AbsoluteChange > 0.99;
+    if (Verbose)
+    {
+      Serial.println("Change is full span.");
+    }
     TransitionTimeToTarget = (uint32_t)(1000000*(AbsoluteChange*TimeRequiredToTransition));
-    if (TransitionTimeToTarget > 0)
+    if ( (TransitionTimeToTarget > 0) || (AbsoluteChange > 0.01) )
     {
       PercentageOpenTarget = FractionToOpen;
+      if (isnan(PercentageOpen))
+      {
+        if (PercentageOpenTarget > 0.0)
+        {
+          PercentageOpen = 0.0;
+        }
+        else
+        {
+          PercentageOpen = 1.0;
+        }
+        if (Verbose)
+        {
+          Serial.print("Valve position not known. Assuming amount open is ");
+          Serial.print(PercentageOpen,2);
+          Serial.println(".");
+        }
+      }
       SetValveModeMoving();
-      float ChangeToPositionTarget = PercentageOpen - PercentageOpenTarget;
-      bool NeedToOpenMore = ChangeToPositionTarget > 0.0;
+      float ChangeToPositionTarget = PercentageOpenTarget - PercentageOpen;
+      bool NeedToOpenMore = ChangeToPositionTarget >= 0.0;
       if (NeedToOpenMore)
       {
         SetDirectionOutput(true);
         ValveIsOpening = true;
+        if (Verbose)
+        {
+          Serial.println("Valve to open set.");
+        }
       }
       else
       {
         SetDirectionOutput(false);
         ValveIsOpening = false;
+        if (Verbose)
+        {
+          Serial.println("Valve to close set.");
+        }
       }
       SetEnableOutput(true);
       ValveEnabled = true;
@@ -223,15 +258,28 @@ void ValveControl::SetTargetPosition(float FractionToOpen)
       {
         Serial.print("Valve moving. Change is ");
         Serial.print(ChangeInTarget,2);
+        Serial.print(". Current position is ");
+        Serial.print(PercentageOpen,2);
+        Serial.print(". Change needed to target position is ");
+        Serial.print(ChangeToPositionTarget,2);
         Serial.print(". Time to change is ");
         Serial.print(TransitionTimeToTarget);
         Serial.print(". Direction is ");
         Serial.print(NeedToOpenMore);
+        Serial.print(" and ");
+        Serial.print(NeedToOpenMore ? "opening" : "closing");
         Serial.println(".");
       }
     }
     CheckPositionPins();
     CheckPositionToTargetPosition();
+  }
+  else
+  {
+    if (Verbose)
+    {
+      Serial.println("No change in valve needed.");
+    }
   }
 }
 void ValveControl::CheckPositionPins()
@@ -250,17 +298,33 @@ void ValveControl::CheckPositionPins()
     Serial.print(IsValveOpen);
     Serial.print(" and valve closed is ");
     Serial.print(IsValveClosed);
-    Serial.print(".");
+    Serial.print(" with time of ");
+    Serial.print((micros() - TransitionTimeStart)/1000);
+    Serial.println(".");
   }
   if (ValveClosedConfirmed && (PercentageOpen != 0.0))
   {
     PercentageOpen = 0.0;
     FireActionCallback(ValveAction::Closed);
+    if (Verbose)
+    {
+      Serial.print("Valve closed confirmed ");
+      Serial.print(" with time of ");
+      Serial.print((micros() - TransitionTimeStart)/1000);
+      Serial.println(".");
+    }
   }
   if (ValveOpenConfirmed && (PercentageOpen != 1.0))
   {
     PercentageOpen = 1.0;
     FireActionCallback(ValveAction::Opened);
+    if (Verbose)
+    {
+      Serial.print("Valve opened confirmed ");
+      Serial.print(" with time of ");
+      Serial.print((micros() - TransitionTimeStart)/1000);
+      Serial.println(".");
+    }
   }
 }
 void ValveControl::CheckPositionToTargetPosition()
@@ -269,6 +333,12 @@ void ValveControl::CheckPositionToTargetPosition()
   {
     StopMoving();
     FireActionCallback(ValveAction::AtPositionTarget);
+    if (Verbose)
+    {
+      Serial.print("Stopping movement with target met at ");
+      Serial.print((micros() - TransitionTimeStart)/1000);
+      Serial.println(".");
+    }
   }
   else if ((PercentageOpenTarget == 1.0) || (PercentageOpenTarget == 0.0))
   {
@@ -302,6 +372,13 @@ void ValveControl::CheckPositionToTargetPosition()
       PercentageOpen = EstimatedPercentageOpen;
       StopMoving();
       FireActionCallback(ValveAction::AtPositionTarget);
+
+      if (Verbose)
+      {
+        Serial.print("Stopping movement with estimated time to target at ");
+        Serial.print((micros() - TransitionTimeStart)/1000);
+        Serial.println(".");
+      }
     }
   }
 }

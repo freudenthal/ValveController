@@ -6,6 +6,10 @@ ValveControl::ValveControl()
 {
   Reset();
 }
+ValveMode ValveControl::GetMode()
+{
+  return Mode;
+}
 void ValveControl::Reset()
 {
   Mode = ValveMode::Idle;
@@ -83,7 +87,7 @@ void ValveControl::Check()
 void ValveControl::CheckAutomationTime()
 {
   uint32_t CurrentTime = 0;
-  if (GetEpochTimeInSeconds == NULL)
+  if (GetEpochTimeInSeconds != NULL)
   {
     CurrentTime = GetEpochTimeInSeconds();
   }

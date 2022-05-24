@@ -38,6 +38,7 @@ class ValveControl
     void SetTargetPosition(float FractionToOpen);
     float GetTargetPosition();
     float GetPosition();
+    ValveMode GetMode();
     void SetTargetPositionOpen();
     void SetTargetPositionClosed();
     void SetAutomaticModeActive(bool AutomaticModeActiveToSet);

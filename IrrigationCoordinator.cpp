@@ -1,5 +1,8 @@
 #include "IrrigationCoordinator.h"
 
+static uint8_t IrrigationCoordinator::Events0DefaultValesToActivateCount = 9;
+static uint8_t IrrigationCoordinator::Events0DefaultValesToActivate[9] = [15,14,13,12,11,10,9,8,7];
+
 IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveControllers, uint8_t InputValveCount, ValveControl** OutputValveControllers, uint8_t OutputValveCount, ValveControl* TankValveController, ValveControl* TankBypassValveController)
 {
 	this->InputValveControllers = InputValveControllers;
@@ -31,10 +34,10 @@ IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveController
 	Events[0].UseTank = false;
 	Events[0].TankSplit = 0.0;
 	Events[0].WaitingTime = 60*60*24;
-	Events[0].OnTime = 30;
+	Events[0].OnTime = 30*60;
 	Events[0].LastActivationTime = 0;
-	Events[0].ValvesToActivate = [15,14,13,12,11,10,9,8,7];
-	Events[0].ValvesToActivateCount = 9;
+	Events[0].ValvesToActivate = Events0DefaultValesToActivateCount;
+	Events[0].ValvesToActivateCount = Events0DefaultValesToActivateCount;
 	EventCount = 1;
 	TankValveController->SetAutomaticModeActive(false);
 	TankBypassValveController->SetAutomaticModeActive(false);
@@ -156,7 +159,7 @@ bool IrrigationCoordinator::CheckValveRunCycle()
 	{
 		for (uint8_t Index=0;Index<OutputValveCount;Index++)
 		{
-			if (!ValveProperties[Index].HasCompletedThisCycle)
+			if (!ValveProperties[Index].HasCompletedThisCycle  && ValveProperties[Index].WillBeActivatedThisCycle)
 			{
 				if (!ValveProperties[Index].HasActivatedThisCycle)
 				{
@@ -207,6 +210,11 @@ void IrrigationCoordinator::ResetValveProperties()
 		ValveProperties[Index].HasActivatedThisCycle = false;
 		ValveProperties[Index].HasCompletedThisCycle = false;
 		ValveProperties[Index].StartTime = 0;
+	}
+	for (uint8_t Index=0;Index<ValvesToActivateCount;Index++)
+	{
+		uint8_t ValveIndex = ValvesToActivateCount[Index];
+		ValveProperties[ValveIndex].WillBeActivatedThisCycle = true;
 	}
 }
 void IrrigationCoordinator::Check()

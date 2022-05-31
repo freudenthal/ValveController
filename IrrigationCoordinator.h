@@ -48,6 +48,8 @@ class IrrigationCoordinator
     void Check();
     bool AllValvesAreIdle();
   private:
+    static uint8_t* Events0DefaultValesToActivate;
+    static uint8_t Events0DefaultValesToActivateCount;
     CycleEvent Events[CycleEventMaxCount];
     uint8_t EventCount;
     ValveControl** InputValveControllers;

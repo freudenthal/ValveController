@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #define IrrigationCoordinatorMaxValves 16
+#define CycleEventMaxCount 16
 
 class IrrigationCoordinator
 {
@@ -17,8 +18,20 @@ class IrrigationCoordinator
       Finishing,
       Count,
     };
+    struct CycleEvent
+    {
+      bool CycleActive;
+      bool UseTank;
+      float TankSplit;
+      uint32_t LastActiveationTime;
+      uint32_t WaitingTime;
+      uint32_t OnTime;
+      uint8_t* ValvesToActivate;
+      uint8_t ValvesToActivateCount;
+    }
     struct ValveState
     {
+      bool WillBeActivatedThisCycle;
       bool HasActivatedThisCycle;
       bool HasCompletedThisCycle;
       uint32_t StartTime;
@@ -35,12 +48,16 @@ class IrrigationCoordinator
     void Check();
     bool AllValvesAreIdle();
   private:
+    CycleEvent Events[CycleEventMaxCount];
+    uint8_t EventCount;
     ValveControl** InputValveControllers;
     uint8_t InputValveCount;
     ValveControl** OutputValveControllers;
     uint8_t OutputValveCount;
     ValveControl* TankValveController;
     ValveControl* TankBypassValveController;
+    uint8_t* ValvesToActivate;
+    uint8_t ValvesToActivateCount
     ValveState ValveProperties[IrrigationCoordinatorMaxValves];
     IrrigationCoordinatorMode Mode;
     GetEpochTimeInSecondsFunction GetEpochTimeInSeconds;

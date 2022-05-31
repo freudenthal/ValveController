@@ -209,6 +209,7 @@ void IrrigationCoordinator::ResetValveProperties()
 	{
 		ValveProperties[Index].HasActivatedThisCycle = false;
 		ValveProperties[Index].HasCompletedThisCycle = false;
+		ValveProperties[Index].WillBeActivatedThisCycle = false;
 		ValveProperties[Index].StartTime = 0;
 	}
 	for (uint8_t Index=0;Index<ValvesToActivateCount;Index++)

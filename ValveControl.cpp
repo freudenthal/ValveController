@@ -6,7 +6,7 @@ ValveControl::ValveControl()
 {
   Reset();
 }
-ValveMode ValveControl::GetMode()
+ValveControl::ValveMode ValveControl::GetMode()
 {
   return Mode;
 }

@@ -23,12 +23,12 @@ class IrrigationCoordinator
       bool CycleActive;
       bool UseTank;
       float TankSplit;
-      uint32_t LastActiveationTime;
+      uint32_t LastActivationTime;
       uint32_t WaitingTime;
       uint32_t OnTime;
       uint8_t* ValvesToActivate;
       uint8_t ValvesToActivateCount;
-    }
+    };
     struct ValveState
     {
       bool WillBeActivatedThisCycle;
@@ -48,8 +48,8 @@ class IrrigationCoordinator
     void Check();
     bool AllValvesAreIdle();
   private:
-    static uint8_t* Events0DefaultValesToActivate;
-    static uint8_t Events0DefaultValesToActivateCount;
+    static const uint8_t Events0DefaultValesToActivate[];
+    static const uint8_t Events0DefaultValesToActivateCount;
     CycleEvent Events[CycleEventMaxCount];
     uint8_t EventCount;
     ValveControl** InputValveControllers;
@@ -59,7 +59,7 @@ class IrrigationCoordinator
     ValveControl* TankValveController;
     ValveControl* TankBypassValveController;
     uint8_t* ValvesToActivate;
-    uint8_t ValvesToActivateCount
+    uint8_t ValvesToActivateCount;
     ValveState ValveProperties[IrrigationCoordinatorMaxValves];
     IrrigationCoordinatorMode Mode;
     GetEpochTimeInSecondsFunction GetEpochTimeInSeconds;

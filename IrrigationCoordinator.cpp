@@ -1,7 +1,7 @@
 #include "IrrigationCoordinator.h"
 
-static uint8_t IrrigationCoordinator::Events0DefaultValesToActivateCount = 9;
-static uint8_t IrrigationCoordinator::Events0DefaultValesToActivate[9] = [15,14,13,12,11,10,9,8,7];
+const uint8_t IrrigationCoordinator::Events0DefaultValesToActivateCount = 9;
+const uint8_t IrrigationCoordinator::Events0DefaultValesToActivate[9] = {15,14,13,12,11,10,9,8,7};
 
 IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveControllers, uint8_t InputValveCount, ValveControl** OutputValveControllers, uint8_t OutputValveCount, ValveControl* TankValveController, ValveControl* TankBypassValveController)
 {
@@ -27,7 +27,7 @@ IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveController
 		Events[Index].LastActivationTime = 0;
 		Events[Index].WaitingTime = 0;
 		Events[Index].OnTime = 0;
-		Events[Index].ValvesToActivate = null;
+		Events[Index].ValvesToActivate = NULL;
 		Events[Index].ValvesToActivateCount = 0;
 	}
 	Events[0].CycleActive = true;
@@ -36,7 +36,7 @@ IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveController
 	Events[0].WaitingTime = 60*60*24;
 	Events[0].OnTime = 30*60;
 	Events[0].LastActivationTime = 0;
-	Events[0].ValvesToActivate = Events0DefaultValesToActivateCount;
+	Events[0].ValvesToActivate = const_cast<uint8_t*>(Events0DefaultValesToActivate);
 	Events[0].ValvesToActivateCount = Events0DefaultValesToActivateCount;
 	EventCount = 1;
 	TankValveController->SetAutomaticModeActive(false);
@@ -131,10 +131,13 @@ bool IrrigationCoordinator::WaitTimeIsComplete()
 		{
 			if (Events[EventIndex].LastActivationTime - GetEpochTimeInSeconds() > Events[EventIndex].WaitingTime)
 			{
-				if (!Events[EventIndex].CycleActive)
+				if ( (!Events[EventIndex].CycleActive) && (Events[EventIndex].ValvesToActivate != NULL) && (Events[EventIndex].ValvesToActivateCount > 0))
 				{
-					Events[EventIndex].CycleActive = false;
-					Serial.println("<IRRIGCONERROR>(Starting watering cycle.)");
+					Events[EventIndex].CycleActive = true;
+					Events[EventIndex].LastActivationTime = GetEpochTimeInSeconds();
+					Serial.print("<IRRIGCON>(Starting watering cycle ");
+					Serial.print(EventIndex);
+					Serial.println(".)");
 					TimeBetweenCycles = Events[EventIndex].WaitingTime;
 					TimeForCycle = Events[EventIndex].OnTime;
 					ValvesToActivate = Events[EventIndex].ValvesToActivate;
@@ -214,7 +217,7 @@ void IrrigationCoordinator::ResetValveProperties()
 	}
 	for (uint8_t Index=0;Index<ValvesToActivateCount;Index++)
 	{
-		uint8_t ValveIndex = ValvesToActivateCount[Index];
+		uint8_t ValveIndex = ValvesToActivate[Index];
 		ValveProperties[ValveIndex].WillBeActivatedThisCycle = true;
 	}
 }

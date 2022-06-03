@@ -356,7 +356,7 @@ void ValveControl::CheckPositionToTargetPosition()
   }
   else if (ValveEnabled)
   {
-    uint32_t TimeSinceMoveStart = micros() - LastActivationTime;
+    uint32_t TimeSinceMoveStart = micros() - TransitionTimeStart;
     float EstimatedAbsolutePercentageMoved = float(TimeSinceMoveStart) / TimeRequiredToTransition;
     float EstimatedPercentageMoved = ValveIsOpening ? EstimatedAbsolutePercentageMoved : -1.0*EstimatedAbsolutePercentageMoved;
     float EstimatedPercentageOpen = PercentageOpen + EstimatedPercentageMoved;
@@ -387,6 +387,19 @@ void ValveControl::CheckPositionToTargetPosition()
       {
         Serial.print("Stopping movement with estimated time to target at ");
         Serial.print((micros() - TransitionTimeStart)/1000);
+        Serial.println(".");
+      }
+    }
+    else
+    {
+      if (Verbose)
+      {
+        Serial.print("Moving time ");
+        Serial.print(TimeSinceMoveStart);
+        Serial.print(" at ");
+        Serial.print(EstimatedPercentageMoved);
+        Serial.print(" total of ");
+        Serial.print(EstimatedPercentageOpen);
         Serial.println(".");
       }
     }

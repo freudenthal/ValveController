@@ -215,6 +215,12 @@ void ValveControl::SetTargetPosition(float FractionToOpen)
       Serial.println("Change is full span.");
     }
     TransitionTimeToTarget = (uint32_t)(1000000*(AbsoluteChange*TimeRequiredToTransition));
+    if (Verbose)
+    {
+      Serial.print("Transition time estimate is ");
+      Serial.print(TransitionTimeToTarget);
+      Serial.println("us.");
+    }
     if ( (TransitionTimeToTarget > 0) || (AbsoluteChange > 0.01) )
     {
       PercentageOpenTarget = FractionToOpen;

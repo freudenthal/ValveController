@@ -52,9 +52,16 @@ IrrigationCoordinator::IrrigationCoordinator(ValveControl** InputValveController
 		ValveProperties[Index].CycleTime = TimeForCycle;
 	}
 }
-void IrrigationCoordinator::ForceCycleStart()
+void IrrigationCoordinator::ForceCycleStart(uint8_t EventIndex)
 {
-	ForceStart = true;
+	if ( (EventIndex < EventCount) && (Events[EventIndex].ValvesToActivate != NULL) && (Events[EventIndex].ValvesToActivateCount > 0) )
+	{
+		TimeBetweenCycles = Events[EventIndex].WaitingTime;
+		TimeForCycle = Events[EventIndex].OnTime;
+		ValvesToActivate = Events[EventIndex].ValvesToActivate;
+		ValvesToActivateCount = Events[EventIndex].ValvesToActivateCount;
+		ForceStart = true;
+	}
 }
 void IrrigationCoordinator::SetGetTimeFunction(GetEpochTimeInSecondsFunction GetEpochTimeInSecondsFunctionToUse)
 {

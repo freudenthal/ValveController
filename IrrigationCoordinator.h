@@ -43,7 +43,7 @@ class IrrigationCoordinator
     void SetCycleRate(uint32_t TimeInSecondsBetweenCyclesToSet);
     void SetCycleActiveTime(uint32_t TimeInSecondsForCycleToSet);
     void SetCycleActiveTime(uint8_t Index, uint32_t TimeInSecondsForCycleToSet);
-    void ForceCycleStart();
+    void ForceCycleStart(uint8_t EventIndex);
     void Begin();
     void Check();
     bool AllValvesAreIdle();

@@ -165,6 +165,7 @@ bool IrrigationCoordinator::WaitTimeIsComplete()
 }
 bool IrrigationCoordinator::CheckValveRunCycle()
 {
+	uint32_t CurrentTime = 0;
 	if (AllValvesAreIdle())
 	{
 		for (uint8_t Index=0;Index<OutputValveCount;Index++)
@@ -173,9 +174,18 @@ bool IrrigationCoordinator::CheckValveRunCycle()
 			{
 				if (!ValveProperties[Index].HasActivatedThisCycle)
 				{
+					if (GetEpochTimeInSeconds != NULL)
+					{
+						CurrentTime = GetEpochTimeInSeconds();
+					}
+					else
+					{
+						Serial.println("Irrigation Coordinator can not get time.");
+						CurrentTime = millis()/1000;
+					}
 					ValveProperties[Index].HasActivatedThisCycle = true;
 					OutputValveControllers[Index]->SetTargetPositionOpen();
-					ValveProperties[Index].StartTime = GetEpochTimeInSeconds();
+					ValveProperties[Index].StartTime = CurrentTime;
 					ValveProperties[Index].HasCompletedThisCycle = false;
 					TimeForCycle = ValveProperties[Index].CycleTime;
 					Serial.print("Opening valve index ");
@@ -185,7 +195,7 @@ bool IrrigationCoordinator::CheckValveRunCycle()
 				}
 				else
 				{
-					if ( (GetEpochTimeInSeconds() - ValveProperties[Index].StartTime) > ValveProperties[Index].CycleTime)
+					if ( (CurrentTime - ValveProperties[Index].StartTime) > ValveProperties[Index].CycleTime)
 					{
 						ValveProperties[Index].HasCompletedThisCycle = true;
 						OutputValveControllers[Index]->SetTargetPositionClosed();
